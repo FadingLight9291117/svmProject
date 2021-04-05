@@ -4,11 +4,11 @@ from train import train, TRAIN_TEST_SPLIT
 from data.statistic import TOTAL_NUM, POSITIVE_NUM, NEGATIVE_NUM
 
 from flask import Flask, render_template, jsonify, request
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "*"}})  # 允许所有域名跨域
+# CORS(app, resources={r"/*": {"origins": "*"}})  # 允许所有域名跨域
 
 app_config = {
     'port': 8081,
@@ -22,6 +22,7 @@ def main():
 
 
 @app.route('/statistic')
+@cross_origin()
 def statistic():
     data = {
         'total_num': TOTAL_NUM,
@@ -37,6 +38,7 @@ metrics = train()
 
 
 @app.route('/metrics')
+@cross_origin()
 def get_metrics():
     return jsonify({
         'accuracy': metrics[0],
@@ -47,6 +49,7 @@ def get_metrics():
 
 
 @app.route('/predict')
+@cross_origin()
 def predict_text():
     text = request.args.get('text')
     result = predict(text)

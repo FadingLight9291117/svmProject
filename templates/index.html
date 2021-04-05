@@ -65,6 +65,7 @@
 </main>
 </body>
 <script type="text/javascript">
+    const HOST = " http://127.0.0.1:8081"
     async function analyse() {
         const text = document.getElementById("text").value;
         if (!text) {
@@ -72,7 +73,7 @@
             return;
         }
 
-        const data = await fetch(`http://localhost:5000/predict?text=${text}`);
+        const data = await fetch(`${HOST}/predict?text=${text}`);
         const result = await data.json();
 
         const sentiment = result['sentiment_key'] === 'positive' ? '积极' : '消极';
@@ -85,12 +86,12 @@
     }
 
     async function getStatistic() {
-        const statistic = await fetch('http://localhost:5000/statistic');
+        const statistic = await fetch(`${HOST}/statistic`);
         return await statistic.json();
     }
 
     async function getMetrics() {
-        const metrics = await fetch("http://localhost:5000/metrics")
+        const metrics = await fetch(`${HOST}/metrics`)
         return await metrics.json();
     }
 
