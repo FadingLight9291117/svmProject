@@ -7,3 +7,7 @@ def dataset():
     data = df[df.keys()[0]]
     data = [item for item in data.to_list() if str(item) != 'nan']
     return data
+
+
+if __name__ == '__main__':
+    data = dataset()

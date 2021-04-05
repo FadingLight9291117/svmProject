@@ -1,12 +1,200 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Result</title>
+
+    <link href="/static/css/mvp.css" rel="stylesheet">
+    <script src="/static/js/echarts.min.js"></script>
 </head>
+<style>
+    .pie {
+        width: 400px;
+        height: 400px;
+    }
+
+    .metric {
+    }
+</style>
 <body>
- Hello World   
+<header>
+    <h1>Result</h1>
+</header>
+<main>
+    <section>
+        <header>
+            <h2>样本统计</h2>
+        </header>
+        <aside id="tts" class="pie"></aside>
+        <aside id="pnr" class="pie"></aside>
+    </section>
+    <section>
+        <header>
+            <h2>模型测试指标</h2>
+        </header>
+        <aside id="acc" class="metric">
+            <h3>准确度</h3>
+        </aside>
+        <aside id="prec" class="metric">
+            <h3>精度</h3>
+        </aside>
+        <aside id="recall" class="metric">
+            <h3>召回率</h3>
+        </aside>
+        <aside id="f1score" class="metric">
+            <h3>F1 Score</h3>
+        </aside>
+    </section>
+    <hr>
+    <section>
+        <form>
+            <header>
+                <h2>文本情感分析</h2>
+            </header>
+            <label for="text">输入文本</label>
+            <textarea id="text" cols="80" rows="5"></textarea>
+            <button type="button" onclick="analyse()">分析</button>
+            <br><br>
+            <p>
+                <span>结果</span>: &nbsp;
+                <span id="sentiment"></span>
+            </p>
+
+        </form>
+    </section>
+</main>
 </body>
+<script type="text/javascript">
+    async function analyse() {
+        const text = document.getElementById("text").value;
+        if (!text) {
+            alert('请输入文本');
+            return;
+        }
+
+        const data = await fetch(`http://localhost:5000/predict?text=${text}`);
+        const result = await data.json();
+
+        const sentiment = result['sentiment_key'] === 'positive' ? '积极' : '消极';
+        let probs = sentiment === '积极' ? result['positive_probs'] : result['negative_probs'];
+        probs = (probs * 100).toFixed(2) + '%';
+        const resultText = `${sentiment} 概率: ${probs}`;
+
+        const sentEle = document.getElementById('sentiment');
+        sentEle.innerHTML = resultText;
+    }
+
+    async function getStatistic() {
+        const statistic = await fetch('http://localhost:5000/statistic');
+        return await statistic.json();
+    }
+
+    async function getMetrics() {
+        const metrics = await fetch("http://localhost:5000/metrics")
+        return await metrics.json();
+    }
+
+    async function setStatisticChart() {
+        const statisticData = await getStatistic();
+
+
+        const train_num = Math.round(statisticData['total_num'] * statisticData['train_test_split']);
+        const test_num = Math.round(statisticData['total_num'] * (1 - statisticData['train_test_split']));
+
+        const trainTestSplitOption = {
+            title: {
+                text: '训练集和测试集比例',
+                subtext: `总数${train_num + test_num}`,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+            },
+            series: [
+                {
+                    name: '数量',
+                    type: 'pie',
+                    radius: '50%',
+                    data: [
+                        {value: train_num, name: '训练集'},
+                        {value: test_num, name: '测试集'},
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };
+
+        const tts = document.getElementById('tts');
+        const trainTestSplitChart = echarts.init(tts);
+        trainTestSplitChart.setOption(trainTestSplitOption);
+
+        const positiveNum = statisticData['positive_num'];
+        const negativeNum = statisticData['negative_num'];
+
+        const option = {
+            title: {
+                text: '样本正例和负例比例',
+                subtext: `总数${positiveNum + negativeNum}`,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+            },
+            color: ['red', 'orange'],
+            series: [
+                {
+                    name: '数量',
+                    type: 'pie',
+                    radius: '50%',
+                    data: [
+                        {value: positiveNum, name: 'positive'},
+                        {value: negativeNum, name: 'negative'},
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };
+
+        const pnr = document.getElementById('pnr');
+        const posNegChart = echarts.init(pnr);
+        posNegChart.setOption(option);
+    }
+
+    async function setMetrics() {
+        const data = await getMetrics();
+
+        const acc = document.getElementById('acc');
+        const prec = document.getElementById('prec');
+        const recall = document.getElementById('recall');
+        const f1score = document.getElementById('f1score')
+        acc.append((data['accuracy'] * 100).toFixed(2) + '%');
+        prec.append((data['precision'] * 100).toFixed(2) + '%');
+        recall.append((data['recall'] * 100).toFixed(2) + '%');
+        f1score.append((data['f1score'] * 100).toFixed(2) + '%');
+    }
+
+    setStatisticChart()
+    setMetrics()
+
+</script>
 </html>
