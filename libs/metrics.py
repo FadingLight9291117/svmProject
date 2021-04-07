@@ -21,5 +21,5 @@ def get_metrics(TPs, TNs, FPs, FNs):
     accuracy = (TPs + TNs) / (TPs + TNs + FPs + FNs)
     precision = TPs / (TPs + FPs)
     recall = TPs / (TPs + FNs)
-    f1score = precision * recall / (precision + recall)
+    f1score = precision * recall / (precision + recall + 1e-16)
     return accuracy, precision, recall, f1score

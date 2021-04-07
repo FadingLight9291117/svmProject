@@ -87,9 +87,10 @@ def train():
     print(score_ploy)
 
     pred = clf.predict(test_X)
-
-    return get_metrics(*metric(pred, test_y))
+    y = test_y
+    return get_metrics(*metric(pred, y))
 
 
 if __name__ == '__main__':
     metrics = train()
+    print(metrics)
